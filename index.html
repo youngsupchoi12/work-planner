@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>마이 워크플래너</title>
+  <!-- 휴대폰 '홈 화면에 추가' 시 앱처럼 보이게 -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="theme-color" content="#4f6bed" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="워크플래너" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ============ 왼쪽 사이드바 ============ -->
+  <aside class="sidebar">
+    <div class="brand">📅 <span id="brandName">마이 워크플래너</span></div>
+    <button class="btn primary add-btn" id="quickAdd" title="일정 추가">+ 일정 추가</button>
+    <nav class="tabs">
+      <button data-view="home" class="active"><span class="ico">🏠</span><span class="lbl">홈</span></button>
+      <button data-view="calendar"><span class="ico">📅</span><span class="lbl">캘린더</span></button>
+      <button data-view="projects"><span class="ico">🎪</span><span class="lbl">행사</span></button>
+      <button data-view="leave"><span class="ico">🌴</span><span class="lbl">휴가</span></button>
+      <button data-view="report"><span class="ico">📊</span><span class="lbl">리포트</span></button>
+      <button data-view="search"><span class="ico">🔍</span><span class="lbl">검색</span></button>
+      <button data-view="settings"><span class="ico">⚙️</span><span class="lbl">설정</span></button>
+    </nav>
+    <div class="side-foot">
+      <button class="side-status" id="cloudStatus" title="PC·휴대폰 동기화 상태"></button>
+      <button class="side-status" id="syncStatus" title="자동 저장 상태"></button>
+      <button class="side-status" id="themeToggle" title="화면 모드 바꾸기"></button>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ============ 홈 ============ -->
+    <section id="view-home" class="view active">
+      <div id="alerts"></div>
+      <div class="kpis" id="kpis"></div>
+
+      <div class="home-grid">
+        <div class="card">
+          <div class="card-head">
+            <h2>오늘 일정</h2>
+            <span id="todayLabel" class="muted"></span>
+          </div>
+          <ul id="todayList" class="list"></ul>
+          <h3 class="sub">다가오는 7일</h3>
+          <ul id="upcomingList" class="list"></ul>
+          <h3 class="sub">진행 중 · 다가오는 행사</h3>
+          <div id="homeProjects" class="mini-projects"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2 id="homeMonthTitle"></h2>
+            <div class="month-nav">
+              <button data-nav="home" data-dir="-1">‹</button>
+              <button data-nav="home" data-dir="0">오늘</button>
+              <button data-nav="home" data-dir="1">›</button>
+            </div>
+          </div>
+          <div id="homeCalendar" class="calendar compact"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 캘린더 ============ -->
+    <section id="view-calendar" class="view">
+      <div class="card">
+        <div class="card-head">
+          <h2 id="calTitle"></h2>
+          <div class="seg small" id="calMode">
+            <label><input type="radio" name="calMode" value="month" checked /><span>월간</span></label>
+            <label><input type="radio" name="calMode" value="week" /><span>주간</span></label>
+          </div>
+          <div class="filters">
+            <label><input type="checkbox" id="fCompany" checked /> 회사</label>
+            <label><input type="checkbox" id="fPersonal" checked /> 개인</label>
+            <label><input type="checkbox" id="fProject" checked /> 행사</label>
+          </div>
+          <div class="month-nav">
+            <button data-nav="cal" data-dir="-1">‹</button>
+            <button data-nav="cal" data-dir="0">오늘</button>
+            <button data-nav="cal" data-dir="1">›</button>
+          </div>
+        </div>
+        <div id="bigCalendar" class="calendar"></div>
+        <div class="legend">
+          <span><i class="dot company"></i>회사</span>
+          <span><i class="dot personal"></i>개인</span>
+          <span><i class="dot leave"></i>연차</span>
+          <span><i class="dot project"></i>프로젝트 휴가</span>
+          <span><i class="dot phase"></i>행사</span>
+          <span class="muted">날짜 클릭 → 추가 · 일정 클릭 → 수정 · 일정을 끌어서 날짜 이동</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 행사 ============ -->
+    <section id="view-projects" class="view">
+      <div class="page-head">
+        <h1>행사 관리</h1>
+        <div class="seg small" id="projFilter">
+          <label><input type="radio" name="projFilter" value="active" checked /><span>진행·예정</span></label>
+          <label><input type="radio" name="projFilter" value="done" /><span>종료</span></label>
+          <label><input type="radio" name="projFilter" value="all" /><span>전체</span></label>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn primary" id="addProject">+ 행사 추가</button>
+      </div>
+      <div id="projectGrid" class="project-grid"></div>
+    </section>
+
+    <!-- ============ 휴가 ============ -->
+    <section id="view-leave" class="view">
+      <div class="kpis" id="leaveKpis"></div>
+      <div class="home-grid even">
+        <div class="card">
+          <h2>연차 계산 근거</h2>
+          <div id="leaveRule" class="rule"></div>
+        </div>
+        <div class="card">
+          <h2>프로젝트 휴가 규정</h2>
+          <div id="projectRule" class="rule"></div>
+        </div>
+      </div>
+      <div class="card" id="bridgeCard">
+        <div class="card-head">
+          <h2>🌉 징검다리 연휴 추천 (앞으로 1년)</h2>
+          <span class="muted">연차를 붙이면 길게 쉴 수 있는 날이에요</span>
+        </div>
+        <div id="bridgeList" class="bridge-list"></div>
+      </div>
+      <div class="home-grid even">
+        <div class="card">
+          <div class="card-head"><h2>휴가 사용 내역</h2></div>
+          <div class="table-wrap"><table class="table" id="usageTable"></table></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>프로젝트 휴가 적립 (주말근무)</h2>
+            <button class="btn" id="addWeekend">+ 주말근무 기록</button>
+          </div>
+          <div class="table-wrap"><table class="table" id="earnTable"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 리포트 ============ -->
+    <section id="view-report" class="view">
+      <div class="page-head">
+        <h1>연말 리포트</h1>
+        <select id="reportYear" class="inline-select"></select>
+      </div>
+      <div class="kpis" id="reportKpis"></div>
+      <div class="home-grid even">
+        <div class="card">
+          <h2>월별 휴가 사용 · 주말근무</h2>
+          <div id="reportChart" class="bar-chart"></div>
+          <div class="legend">
+            <span><i class="dot leave"></i>연차 사용</span>
+            <span><i class="dot project"></i>프로젝트 휴가 사용</span>
+            <span><i class="dot company"></i>주말근무 적립</span>
+          </div>
+        </div>
+        <div class="card">
+          <h2>한 해 요약</h2>
+          <div id="reportSummary" class="rule"></div>
+          <h3 class="sub">참여한 행사</h3>
+          <ul id="reportProjects" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 검색 ============ -->
+    <section id="view-search" class="view">
+      <div class="page-head">
+        <h1>검색</h1>
+      </div>
+      <div class="card">
+        <input id="searchInput" class="search-input" placeholder="일정, 메모, 행사명, 클라이언트, 장소로 검색 (단축키 /)" autocomplete="off" />
+        <div id="searchResults" class="search-results"></div>
+      </div>
+    </section>
+
+    <!-- ============ 설정 ============ -->
+    <section id="view-settings" class="view">
+      <div class="settings-grid">
+        <div class="card">
+          <h2>기본 정보</h2>
+          <form id="settingsForm">
+            <label class="field"><span>이름</span><input name="name" placeholder="홍길동" /></label>
+            <label class="field"><span>입사일</span><input type="date" name="joinDate" /></label>
+            <div class="row">
+              <label class="field"><span>연차 보정 (+/- 일)</span><input type="number" step="0.5" name="annualAdjust" /></label>
+              <label class="field"><span>프로젝트 휴가 보정 (+/- 일)</span><input type="number" step="0.5" name="projectAdjust" /></label>
+            </div>
+            <label class="field">
+              <span>프로젝트 휴가 '월말' 기준 (말일로부터 며칠 이내)</span>
+              <input type="number" min="0" max="15" name="monthEndDays" />
+            </label>
+            <p class="hint">주말근무일이 말일로부터 이 일수 안에 있으면 다음 달 말일까지, 아니면 그달 말일까지 쓸 수 있어요. (기본 7일 = 그달의 마지막 주말)</p>
+            <div class="field">
+              <span>기본 색상 (일정에 색을 따로 지정하지 않으면 이 색으로 표시)</span>
+              <div class="color-row">
+                <label class="color-pick"><input type="color" name="c_company" /> 회사</label>
+                <label class="color-pick"><input type="color" name="c_personal" /> 개인</label>
+                <label class="color-pick"><input type="color" name="c_leave" /> 연차</label>
+                <label class="color-pick"><input type="color" name="c_project" /> 프로젝트 휴가</label>
+                <label class="color-pick"><input type="color" name="c_phase" /> 행사</label>
+                <button type="button" class="btn small" id="resetColors">기본값으로</button>
+              </div>
+            </div>
+            <label class="field">
+              <span>화면 모드</span>
+              <select name="theme">
+                <option value="system">시스템 설정 따르기</option>
+                <option value="light">라이트</option>
+                <option value="dark">다크</option>
+              </select>
+            </label>
+            <div><button type="submit" class="btn primary">저장</button></div>
+          </form>
+        </div>
+
+        <div>
+          <div class="card">
+            <h2>☁️ PC·휴대폰 동기화</h2>
+            <p class="hint">구글 계정으로 로그인하면 데이터가 온라인에 저장돼서 PC와 휴대폰에서 같은 내용을 볼 수 있어요. 본인만 볼 수 있어요.</p>
+            <div id="cloudPanel"></div>
+          </div>
+          <div class="card">
+            <h2>💾 자동 저장 (PC 파일)</h2>
+            <p class="hint">파일을 한 번 연결하면 일정이 바뀔 때마다 그 파일에 자동 저장돼요. OneDrive·구글 드라이브 폴더에 두면 클라우드 백업까지 됩니다. (크롬·엣지 전용)</p>
+            <div id="syncPanel"></div>
+          </div>
+          <div class="card">
+            <h2>수동 백업</h2>
+            <p class="hint">데이터는 이 브라우저에 저장돼요. 자동 저장을 쓰지 않는다면 가끔 백업해 두세요.</p>
+            <div class="btn-row">
+              <button class="btn" id="exportBtn">⬇ 백업 파일 받기</button>
+              <label class="btn">⬆ 백업 불러오기<input type="file" id="importFile" accept=".json" hidden /></label>
+              <button class="btn danger" id="resetBtn">전체 초기화</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ 일정 추가/수정 팝업 ============ -->
+  <dialog id="eventDialog">
+    <form id="eventForm">
+      <h2 id="dlgTitle">일정 추가</h2>
+      <label class="field"><span>제목</span><input name="title" placeholder="예: 클라이언트 미팅 (휴가는 비워둬도 돼요)" /></label>
+
+      <div class="field">
+        <span>구분</span>
+        <div class="seg">
+          <label><input type="radio" name="category" value="company" checked /><span>🏢 회사</span></label>
+          <label><input type="radio" name="category" value="personal" /><span>🙋 개인</span></label>
+          <label><input type="radio" name="category" value="project" /><span>🎪 행사</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>색상</span>
+        <div class="swatches" id="evSwatches"></div>
+      </div>
+
+      <div class="row">
+        <label class="field"><span>시작일</span><input type="date" name="date" required /></label>
+        <label class="field"><span>종료일 (선택)</span><input type="date" name="endDate" /></label>
+      </div>
+      <div class="row">
+        <label class="field"><span>시작 시간 (선택)</span><input type="time" name="time" /></label>
+        <label class="field"><span>끝 시간 (선택)</span><input type="time" name="endTime" /></label>
+      </div>
+
+      <div class="row">
+        <label class="field" id="leaveField">
+          <span>휴가 사용</span>
+          <select name="leaveType">
+            <option value="none">사용 안 함</option>
+            <option value="annual">연차</option>
+            <option value="half_am">오전 반차 (0.5)</option>
+            <option value="half_pm">오후 반차 (0.5)</option>
+            <option value="project">프로젝트 휴가</option>
+            <option value="project_half">프로젝트 반차 (0.5)</option>
+          </select>
+        </label>
+        <label class="field" id="earnField">
+          <span>주말근무 적립</span>
+          <select name="earn">
+            <option value="0">적립 안 함</option>
+            <option value="1">프로젝트 휴가 1일</option>
+            <option value="0.5">프로젝트 휴가 0.5일</option>
+          </select>
+        </label>
+        <label class="field" id="projectField">
+          <span>행사 연결</span>
+          <select name="projectId"></select>
+        </label>
+      </div>
+
+      <div class="row" id="repeatRow">
+        <label class="field">
+          <span>반복</span>
+          <select name="repeat">
+            <option value="none">반복 안 함</option>
+            <option value="daily">매일</option>
+            <option value="weekdays">평일마다 (월~금)</option>
+            <option value="weekly">매주</option>
+            <option value="monthly">매월</option>
+          </select>
+        </label>
+        <label class="field" id="repeatUntilField"><span>반복 종료일 (선택)</span><input type="date" name="repeatUntil" /></label>
+      </div>
+
+      <label class="check"><input type="checkbox" name="important" /> ⭐ 중요 일정</label>
+      <label class="field"><span>메모</span><textarea name="memo" rows="2"></textarea></label>
+      <p id="leaveHint" class="hint"></p>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn danger" id="deleteBtn">삭제</button>
+        <button type="button" class="btn danger" id="skipBtn">이 날만 삭제</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" data-close>취소</button>
+        <button type="submit" class="btn primary">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ 행사 추가/수정 팝업 ============ -->
+  <dialog id="projectDialog" class="wide">
+    <form id="projectForm">
+      <h2 id="projDlgTitle">행사 추가</h2>
+      <div class="row">
+        <label class="field grow2"><span>행사명</span><input name="name" placeholder="예: 2026 한독 송년회" required /></label>
+        <label class="field"><span>클라이언트</span><input name="client" placeholder="예: 한독" /></label>
+      </div>
+      <div class="row">
+        <label class="field grow2"><span>장소</span><input name="venue" placeholder="예: 그랜드 하얏트 서울" /></label>
+        <div class="field">
+          <span>색상</span>
+          <div class="swatches" id="swatches"></div>
+        </div>
+      </div>
+
+      <div class="phase-grid">
+        <span class="phase-label">🔧 셋업</span>
+        <input type="date" name="setupStart" /><span class="tilde">~</span><input type="date" name="setupEnd" />
+        <span class="phase-label">🎤 본행사</span>
+        <input type="date" name="mainStart" required /><span class="tilde">~</span><input type="date" name="mainEnd" />
+        <span class="phase-label">📦 철수</span>
+        <input type="date" name="teardownStart" /><span class="tilde">~</span><input type="date" name="teardownEnd" />
+      </div>
+      <p class="hint">본행사 시작일은 필수예요. 하루짜리면 끝나는 날은 비워 두세요.</p>
+
+      <div class="field">
+        <span>주말근무 → 프로젝트 휴가 적립 <em id="earnSum" class="muted"></em></span>
+        <div id="earnList" class="earn-list"></div>
+      </div>
+
+      <div class="field">
+        <span>체크리스트 <em id="todoProgress" class="muted"></em></span>
+        <ul id="todoList" class="todo-list"></ul>
+        <div class="todo-add">
+          <input id="todoInput" placeholder="할 일 입력 후 Enter (예: 견적서 발송)" />
+          <button type="button" class="btn" id="todoAddBtn">추가</button>
+        </div>
+      </div>
+
+      <label class="field"><span>메모</span><textarea name="memo" rows="2"></textarea></label>
+      <div id="projLinked" class="hint"></div>
+
+      <div class="dlg-actions">
+        <button type="button" class="btn danger" id="projDeleteBtn">삭제</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" data-close>취소</button>
+        <button type="submit" class="btn primary">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="holidays.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+  <script type="module" src="cloud.js"></script>
+</body>
+</html>
